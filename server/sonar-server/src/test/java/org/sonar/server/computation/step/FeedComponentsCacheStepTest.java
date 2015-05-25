@@ -36,6 +36,7 @@ import org.sonar.core.persistence.DbSession;
 import org.sonar.core.persistence.DbTester;
 import org.sonar.server.component.db.ComponentDao;
 import org.sonar.server.computation.ComputationContext;
+import org.sonar.server.computation.batch.FileBatchReportReader;
 import org.sonar.server.computation.component.ComponentTreeBuilders;
 import org.sonar.server.computation.component.ComputeComponentsRefCache;
 import org.sonar.server.computation.component.DumbComponent;
@@ -121,7 +122,7 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
       .setPath("src/main/java/dir/Foo.java")
       .build());
 
-    sut.execute(new ComputationContext(new BatchReportReader(reportDir), PROJECT_KEY, projectSettings,
+    sut.execute(new ComputationContext(new FileBatchReportReader(new BatchReportReader(reportDir)), PROJECT_KEY, projectSettings,
         dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
     assertThat(computeComponentsRefCache.getByRef(1).getKey()).isEqualTo(PROJECT_KEY);
@@ -178,7 +179,7 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
       .setPath("src/main/java/dir/Foo.java")
       .build());
 
-    sut.execute(new ComputationContext(new BatchReportReader(reportDir), PROJECT_KEY, projectSettings,
+    sut.execute(new ComputationContext(new FileBatchReportReader(new BatchReportReader(reportDir)), PROJECT_KEY, projectSettings,
         dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
     assertThat(computeComponentsRefCache.getByRef(4).getKey()).isEqualTo("SUB_MODULE_KEY:src/main/java/dir");
@@ -220,7 +221,7 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
       .setPath("src/main/java/dir/Foo.java")
       .build());
 
-    sut.execute(new ComputationContext(new BatchReportReader(reportDir), PROJECT_KEY, projectSettings,
+    sut.execute(new ComputationContext(new FileBatchReportReader(new BatchReportReader(reportDir)), PROJECT_KEY, projectSettings,
         dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
     assertThat(computeComponentsRefCache.getByRef(1).getKey()).isEqualTo("PROJECT_KEY:origin/master");

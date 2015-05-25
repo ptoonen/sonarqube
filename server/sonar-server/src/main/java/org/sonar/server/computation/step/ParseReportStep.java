@@ -20,13 +20,12 @@
 
 package org.sonar.server.computation.step;
 
+import java.util.List;
 import org.sonar.batch.protocol.output.BatchReport;
-import org.sonar.batch.protocol.output.BatchReportReader;
 import org.sonar.server.computation.ComputationContext;
+import org.sonar.server.computation.batch.BatchReportReader;
 import org.sonar.server.computation.component.ComputeComponentsRefCache;
 import org.sonar.server.computation.issue.IssueComputation;
-
-import java.util.List;
 
 public class ParseReportStep implements ComputationStep {
 

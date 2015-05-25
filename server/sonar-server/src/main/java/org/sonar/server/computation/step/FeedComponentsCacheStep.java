@@ -21,20 +21,19 @@
 package org.sonar.server.computation.step;
 
 import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
 import org.sonar.api.utils.internal.Uuids;
 import org.sonar.batch.protocol.Constants;
 import org.sonar.batch.protocol.output.BatchReport;
-import org.sonar.batch.protocol.output.BatchReportReader;
 import org.sonar.core.component.ComponentDto;
 import org.sonar.core.component.ComponentKeys;
 import org.sonar.core.persistence.DbSession;
 import org.sonar.core.util.NonNullInputFunction;
 import org.sonar.server.computation.ComputationContext;
+import org.sonar.server.computation.batch.BatchReportReader;
 import org.sonar.server.computation.component.ComputeComponentsRefCache;
 import org.sonar.server.db.DbClient;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Read all components from the batch report and feed the cache containing component uuid and key

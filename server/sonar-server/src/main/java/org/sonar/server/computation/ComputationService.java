@@ -23,7 +23,7 @@ package org.sonar.server.computation;
 import com.google.common.base.Throwables;
 import java.io.File;
 import java.io.IOException;
-import javax.annotation.Nullable;
+import javax.annotation.CheckForNull;
 import org.apache.commons.io.FileUtils;
 import org.sonar.api.config.Settings;
 import org.sonar.api.server.ServerSide;
@@ -33,24 +33,20 @@ import org.sonar.api.utils.ZipUtils;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.api.utils.log.Profiler;
-import org.sonar.batch.protocol.output.BatchReportReader;
 import org.sonar.core.component.ComponentDto;
 import org.sonar.core.computation.db.AnalysisReportDto;
 import org.sonar.core.persistence.DbSession;
 import org.sonar.core.persistence.MyBatis;
 import org.sonar.server.activity.Activity;
 import org.sonar.server.activity.ActivityService;
+import org.sonar.server.computation.batch.BatchReportReader;
+import org.sonar.server.computation.batch.FileBatchReportReader;
 import org.sonar.server.computation.component.ComponentTreeBuilders;
 import org.sonar.server.computation.language.LanguageRepository;
 import org.sonar.server.computation.step.ComputationStep;
 import org.sonar.server.computation.step.ComputationSteps;
 import org.sonar.server.db.DbClient;
 import org.sonar.server.properties.ProjectSettingsFactory;
-
-import javax.annotation.CheckForNull;
-
-import java.io.File;
-import java.io.IOException;
 
 import static org.sonar.api.utils.DateUtils.formatDateTimeNullSafe;
 import static org.sonar.api.utils.DateUtils.longToDate;
@@ -89,7 +85,7 @@ public class ComputationService {
 
     try {
       File reportDir = extractReportInDir(item);
-      BatchReportReader reader = new BatchReportReader(reportDir);
+      BatchReportReader reader = new FileBatchReportReader(new org.sonar.batch.protocol.output.BatchReportReader(reportDir));
       Settings projectSettings = projectSettingsFactory.newProjectSettings(projectKey);
       ComputationContext context = new ComputationContext(reader, projectKey, projectSettings, dbClient, ComponentTreeBuilders.from(reader), languageRepository);
       for (ComputationStep step : steps.orderedSteps()) {

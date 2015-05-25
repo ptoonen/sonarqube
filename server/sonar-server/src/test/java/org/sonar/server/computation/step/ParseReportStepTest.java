@@ -19,6 +19,10 @@
  */
 package org.sonar.server.computation.step;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,20 +30,13 @@ import org.junit.rules.TemporaryFolder;
 import org.sonar.api.config.Settings;
 import org.sonar.batch.protocol.Constants;
 import org.sonar.batch.protocol.output.BatchReport;
-import org.sonar.batch.protocol.output.BatchReportReader;
-import org.sonar.batch.protocol.output.BatchReportWriter;
 import org.sonar.core.persistence.DbTester;
 import org.sonar.server.computation.ComputationContext;
+import org.sonar.server.computation.batch.BatchReportReaderRule;
 import org.sonar.server.computation.component.ComponentTreeBuilders;
-import org.sonar.server.computation.component.DumbComponent;
 import org.sonar.server.computation.component.ComputeComponentsRefCache;
+import org.sonar.server.computation.component.DumbComponent;
 import org.sonar.server.computation.issue.IssueComputation;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.sonar.server.computation.language.LanguageRepository;
 import org.sonar.server.db.DbClient;
 
@@ -57,6 +54,8 @@ public class ParseReportStepTest extends BaseStepTest {
 
   @Rule
   public TemporaryFolder temp = new TemporaryFolder();
+  @Rule
+  public BatchReportReaderRule reportReader = new BatchReportReaderRule();
 
   @ClassRule
   public static DbTester dbTester = new DbTester();
@@ -72,9 +71,9 @@ public class ParseReportStepTest extends BaseStepTest {
     computeComponentsRefCache.addComponent(2, new ComputeComponentsRefCache.ComputeComponent("PROJECT_KEY:file1", "FILE1_UUID"));
     computeComponentsRefCache.addComponent(3, new ComputeComponentsRefCache.ComputeComponent("PROJECT_KEY:file2", "FILE2_UUID"));
 
-    File reportDir = generateReport();
+    generateReport();
 
-    ComputationContext context = new ComputationContext(new BatchReportReader(reportDir), PROJECT_KEY, new Settings(),
+    ComputationContext context = new ComputationContext(reportReader, PROJECT_KEY, new Settings(),
         mock(DbClient.class), ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), mock(LanguageRepository.class));
     sut.execute(context);
 
@@ -89,35 +88,36 @@ public class ParseReportStepTest extends BaseStepTest {
     verify(issueComputation).afterReportProcessing();
   }
 
-  private File generateReport() throws IOException {
-    File dir = temp.newFolder();
+  private void generateReport() throws IOException {
     // project and 2 files
-    BatchReportWriter writer = new BatchReportWriter(dir);
-    writer.writeMetadata(BatchReport.Metadata.newBuilder()
-      .setRootComponentRef(1)
-      .setProjectKey(PROJECT_KEY)
-      .setAnalysisDate(150000000L)
-      .setDeletedComponentsCount(1)
-      .build());
+    reportReader.setMetadata(BatchReport.Metadata.newBuilder()
+        .setRootComponentRef(1)
+        .setProjectKey(PROJECT_KEY)
+        .setAnalysisDate(150000000L)
+        .setDeletedComponentsCount(1)
+        .build());
 
-    writer.writeComponent(BatchReport.Component.newBuilder()
-      .setRef(1)
-      .setType(Constants.ComponentType.PROJECT)
-      .addChildRef(2)
-      .addChildRef(3)
-      .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
-      .setRef(2)
-      .setType(Constants.ComponentType.FILE)
-      .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
-      .setRef(3)
-      .setType(Constants.ComponentType.FILE)
-      .build());
+    reportReader.putComponent(BatchReport.Component.newBuilder()
+        .setRef(1)
+        .setType(Constants.ComponentType.PROJECT)
+        .addChildRef(2)
+        .addChildRef(3)
+        .build());
+    reportReader.putComponent(BatchReport.Component.newBuilder()
+        .setRef(2)
+        .setType(Constants.ComponentType.FILE)
+        .build());
+    reportReader.putComponent(BatchReport.Component.newBuilder()
+        .setRef(3)
+        .setType(Constants.ComponentType.FILE)
+        .build());
 
     // deleted components
-    writer.writeDeletedComponentIssues(1, "DELETED_UUID", ISSUES_ON_DELETED_COMPONENT);
-    return dir;
+    BatchReport.Issues.Builder issuesBuilder = BatchReport.Issues.newBuilder();
+    issuesBuilder.setComponentRef(1);
+    issuesBuilder.setComponentUuid("DELETED_UUID");
+    issuesBuilder.addAllIssue(ISSUES_ON_DELETED_COMPONENT);
+    reportReader.putDeletedIssues(1, issuesBuilder.build());
   }
 
   @Override

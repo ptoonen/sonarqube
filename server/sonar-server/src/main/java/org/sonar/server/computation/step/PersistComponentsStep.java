@@ -21,6 +21,9 @@
 package org.sonar.server.computation.step;
 
 import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -28,19 +31,14 @@ import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.Scopes;
 import org.sonar.batch.protocol.Constants;
 import org.sonar.batch.protocol.output.BatchReport;
-import org.sonar.batch.protocol.output.BatchReportReader;
 import org.sonar.core.component.ComponentDto;
 import org.sonar.core.persistence.DbSession;
 import org.sonar.core.util.NonNullInputFunction;
 import org.sonar.server.computation.ComputationContext;
+import org.sonar.server.computation.batch.BatchReportReader;
 import org.sonar.server.computation.component.ComputeComponentsRefCache;
 import org.sonar.server.computation.component.DbComponentsRefCache;
 import org.sonar.server.db.DbClient;
-
-import javax.annotation.Nullable;
-
-import java.util.List;
-import java.util.Map;
 
 public class PersistComponentsStep implements ComputationStep {
 
@@ -86,7 +84,7 @@ public class PersistComponentsStep implements ComputationStep {
   }
 
   private ComponentDto processComponent(ComponentContext componentContext, BatchReport.Component reportComponent, @Nullable ComponentDto parentModule,
-                                        @Nullable ComponentDto project) {
+    @Nullable ComponentDto project) {
     ComputeComponentsRefCache.ComputeComponent cacheComputeComponent = computeComponentsRefCache.getByRef(reportComponent.getRef());
     String componentKey = cacheComputeComponent.getKey();
     String componentUuid = cacheComputeComponent.getUuid();
@@ -105,7 +103,7 @@ public class PersistComponentsStep implements ComputationStep {
   }
 
   private ComponentDto createComponent(BatchReport.Component reportComponent, String componentKey, String uuid, @Nullable ComponentDto parentModule,
-                                       @Nullable ComponentDto project) {
+    @Nullable ComponentDto project) {
     ComponentDto component = new ComponentDto();
     component.setUuid(uuid);
     component.setKey(componentKey);
@@ -185,7 +183,7 @@ public class PersistComponentsStep implements ComputationStep {
         return Scopes.DIRECTORY;
       case FILE:
         return Scopes.FILE;
-      default :
+      default:
         throw new IllegalArgumentException(String.format("Unknown type '%s'", reportComponent.getType()));
     }
   }
