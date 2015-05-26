@@ -21,11 +21,14 @@ package org.sonar.server.computation;
 
 import java.util.Arrays;
 import java.util.List;
-
 import org.sonar.core.issue.db.UpdateConflictResolver;
 import org.sonar.core.platform.ComponentContainer;
+import org.sonar.server.computation.activity.CEActivityManager;
+import org.sonar.server.computation.batch.CEBatchReportReader;
+import org.sonar.server.computation.batch.ReportExtractor;
 import org.sonar.server.computation.component.ComputeComponentsRefCache;
 import org.sonar.server.computation.component.DbComponentsRefCache;
+import org.sonar.server.computation.container.CEContainer;
 import org.sonar.server.computation.issue.IssueCache;
 import org.sonar.server.computation.issue.IssueComputation;
 import org.sonar.server.computation.issue.RuleCache;
@@ -47,11 +50,12 @@ public class ComputationContainer {
    */
   static List componentClasses() {
     return Arrays.asList(
-      // context-scope repositories
-      PlatformLanguageRepository.class,
+      CEActivityManager.class,
+      ReportExtractor.class,
+      CEBatchReportReader.class,
 
-      ComputationService.class,
-      ComputationSteps.class,
+      // repositories
+      PlatformLanguageRepository.class,
 
       // component caches
       ComputeComponentsRefCache.class,
@@ -74,17 +78,20 @@ public class ComputationContainer {
 
   public void execute(ReportQueue.Item item) {
     ComponentContainer container = Platform.getInstance().getContainer();
-    ComponentContainer child = container.createChild();
-    child.addSingletons(componentClasses());
-    child.addSingletons(ComputationSteps.orderedStepClasses());
-    child.startComponents();
+
+    ComponentContainer ceContainer = new CEContainer(container);
+    ceContainer.add(ceContainer);
+    ceContainer.add(item);
+    ceContainer.addSingletons(componentClasses());
+    ceContainer.addSingletons(ComputationSteps.orderedStepClasses());
     try {
-      child.getComponentByType(ComputationService.class).process(item);
+      ceContainer.getComponentByType(ComputationService.class).process();
     } finally {
-      child.stopComponents();
+      ceContainer.stopComponents();
       // TODO not possible to have multiple children -> will be
       // a problem when we will have multiple concurrent computation workers
       container.removeChild();
     }
   }
+
 }

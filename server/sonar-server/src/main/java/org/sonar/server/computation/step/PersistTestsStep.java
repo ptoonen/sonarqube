@@ -61,11 +61,13 @@ public class PersistTestsStep implements ComputationStep {
   private final DbClient dbClient;
   private final System2 system;
   private final DbComponentsRefCache dbComponentsRefCache;
+  private final BatchReportReader reportReader;
 
-  public PersistTestsStep(DbClient dbClient, System2 system, DbComponentsRefCache dbComponentsRefCache) {
+  public PersistTestsStep(DbClient dbClient, System2 system, DbComponentsRefCache dbComponentsRefCache, BatchReportReader reportReader) {
     this.dbClient = dbClient;
     this.system = system;
     this.dbComponentsRefCache = dbComponentsRefCache;
+    this.reportReader = reportReader;
   }
 
   @Override
@@ -73,7 +75,7 @@ public class PersistTestsStep implements ComputationStep {
     DbSession session = dbClient.openSession(true);
     try {
       int rootComponentRef = computationContext.getReportMetadata().getRootComponentRef();
-      TestContext context = new TestContext(computationContext, session, dbComponentsRefCache);
+      TestContext context = new TestContext(computationContext, session, dbComponentsRefCache, reportReader);
 
       recursivelyProcessComponent(context, rootComponentRef);
       session.commit();
@@ -237,11 +239,11 @@ public class PersistTestsStep implements ComputationStep {
     final Map<String, FileSourceDto> existingFileSourcesByUuid;
     boolean hasUnprocessedCoverageDetails = false;
 
-    TestContext(ComputationContext context, DbSession session, DbComponentsRefCache dbComponentsRefCache) {
+    TestContext(ComputationContext context, DbSession session, DbComponentsRefCache dbComponentsRefCache, BatchReportReader reportReader) {
       this.session = session;
       this.context = context;
       this.dbComponentsRefCache = dbComponentsRefCache;
-      this.reader = context.getReportReader();
+      this.reader = reportReader;
       this.existingFileSourcesByUuid = new HashMap<>();
       session.select("org.sonar.core.source.db.FileSourceMapper.selectHashesForProject",
         ImmutableMap.of("projectUuid", dbComponentsRefCache.getByRef(context.getReportMetadata().getRootComponentRef()).getUuid(), "dataType", Type.TEST),

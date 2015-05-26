@@ -34,6 +34,7 @@ import org.sonar.batch.protocol.output.BatchReport;
 import org.sonar.core.measure.db.MeasureDto;
 import org.sonar.core.persistence.DbSession;
 import org.sonar.server.computation.ComputationContext;
+import org.sonar.server.computation.batch.BatchReportReader;
 import org.sonar.server.computation.event.Event;
 import org.sonar.server.computation.event.EventRepository;
 import org.sonar.server.computation.measure.MeasureRepository;
@@ -49,11 +50,14 @@ public class ComponentImpl implements Component {
   private final Type type;
   private final BatchReport.Component component;
   private final List<Component> children;
+  private final BatchReportReader reportReader;
   private final EventRepository eventRepository = new SetEventRepository();
 
-  public ComponentImpl(ComputationContext context, BatchReport.Component component, @Nullable Iterable<Component> children) {
+  public ComponentImpl(ComputationContext context, BatchReport.Component component,
+    BatchReportReader reportReader, @Nullable Iterable<Component> children) {
     this.context = context;
     this.component = component;
+    this.reportReader = reportReader;
     this.type = convertType(component.getType());
     this.children = children == null ? Collections.<Component>emptyList() : copyOf(filter(children, notNull()));
   }
@@ -114,7 +118,7 @@ public class ComponentImpl implements Component {
       @Override
       public Optional<BatchReport.Measure> findCurrent(final Metric<?> metric) {
         return Optional.fromNullable(Iterables.find(
-          context.getReportReader().readComponentMeasures(component.getRef()),
+          reportReader.readComponentMeasures(component.getRef()),
           new Predicate<BatchReport.Measure>() {
             @Override
             public boolean apply(@Nonnull BatchReport.Measure input) {

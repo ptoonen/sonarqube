@@ -20,23 +20,19 @@
 
 package org.sonar.server.computation.step;
 
-import java.io.File;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.sonar.api.config.Settings;
 import org.sonar.batch.protocol.Constants;
 import org.sonar.batch.protocol.output.BatchReport;
-import org.sonar.batch.protocol.output.BatchReportReader;
-import org.sonar.batch.protocol.output.BatchReportWriter;
 import org.sonar.core.persistence.DbSession;
 import org.sonar.core.persistence.DbTester;
 import org.sonar.server.component.db.ComponentDao;
 import org.sonar.server.computation.ComputationContext;
-import org.sonar.server.computation.batch.FileBatchReportReader;
+import org.sonar.server.computation.batch.BatchReportReaderRule;
 import org.sonar.server.computation.component.ComponentTreeBuilders;
 import org.sonar.server.computation.component.ComputeComponentsRefCache;
 import org.sonar.server.computation.component.DumbComponent;
@@ -54,11 +50,8 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
 
   @ClassRule
   public static DbTester dbTester = new DbTester();
-
   @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
-
-  File reportDir;
+  public BatchReportReaderRule reportReader = new BatchReportReaderRule();
 
   DbSession session;
 
@@ -78,11 +71,9 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
     session = dbTester.myBatis().openSession(false);
     dbClient = new DbClient(dbTester.database(), dbTester.myBatis(), new ComponentDao());
 
-    reportDir = temp.newFolder();
-
     computeComponentsRefCache = new ComputeComponentsRefCache();
     projectSettings = new Settings();
-    sut = new FeedComponentsCacheStep(dbClient, computeComponentsRefCache);
+    sut = new FeedComponentsCacheStep(dbClient, computeComponentsRefCache, reportReader);
   }
 
   @Override
@@ -92,37 +83,35 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
 
   @Test
   public void add_components() throws Exception {
-    File reportDir = temp.newFolder();
-    BatchReportWriter writer = new BatchReportWriter(reportDir);
-    writer.writeMetadata(BatchReport.Metadata.newBuilder()
+    reportReader.setMetadata(BatchReport.Metadata.newBuilder()
       .setRootComponentRef(1)
       .build());
 
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(1)
       .setType(Constants.ComponentType.PROJECT)
       .setKey(PROJECT_KEY)
       .addChildRef(2)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(2)
       .setType(Constants.ComponentType.MODULE)
       .setKey("MODULE_KEY")
       .addChildRef(3)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(3)
       .setType(Constants.ComponentType.DIRECTORY)
       .setPath("src/main/java/dir")
       .addChildRef(4)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(4)
       .setType(Constants.ComponentType.FILE)
       .setPath("src/main/java/dir/Foo.java")
       .build());
 
-    sut.execute(new ComputationContext(new FileBatchReportReader(new BatchReportReader(reportDir)), PROJECT_KEY, projectSettings,
+    sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings,
         dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
     assertThat(computeComponentsRefCache.getByRef(1).getKey()).isEqualTo(PROJECT_KEY);
@@ -140,46 +129,44 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
 
   @Test
   public void use_latest_module_for_files_key() throws Exception {
-    File reportDir = temp.newFolder();
-    BatchReportWriter writer = new BatchReportWriter(reportDir);
-    writer.writeMetadata(BatchReport.Metadata.newBuilder()
+    reportReader.setMetadata(BatchReport.Metadata.newBuilder()
       .setRootComponentRef(1)
       .build());
 
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(1)
       .setType(Constants.ComponentType.PROJECT)
       .setKey(PROJECT_KEY)
       .setName("Project")
       .addChildRef(2)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(2)
       .setType(Constants.ComponentType.MODULE)
       .setKey("MODULE_KEY")
       .setName("Module")
       .addChildRef(3)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(3)
       .setType(Constants.ComponentType.MODULE)
       .setKey("SUB_MODULE_KEY")
       .setName("Sub Module")
       .addChildRef(4)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(4)
       .setType(Constants.ComponentType.DIRECTORY)
       .setPath("src/main/java/dir")
       .addChildRef(5)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(5)
       .setType(Constants.ComponentType.FILE)
       .setPath("src/main/java/dir/Foo.java")
       .build());
 
-    sut.execute(new ComputationContext(new FileBatchReportReader(new BatchReportReader(reportDir)), PROJECT_KEY, projectSettings,
+    sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings,
         dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
     assertThat(computeComponentsRefCache.getByRef(4).getKey()).isEqualTo("SUB_MODULE_KEY:src/main/java/dir");
@@ -188,40 +175,38 @@ public class FeedComponentsCacheStepTest extends BaseStepTest {
 
   @Test
   public void use_branch_to_generate_keys() throws Exception {
-    File reportDir = temp.newFolder();
-    BatchReportWriter writer = new BatchReportWriter(reportDir);
-    writer.writeMetadata(BatchReport.Metadata.newBuilder()
+    reportReader.setMetadata(BatchReport.Metadata.newBuilder()
       .setRootComponentRef(1)
       .setBranch("origin/master")
       .build());
 
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(1)
       .setType(Constants.ComponentType.PROJECT)
       .setKey(PROJECT_KEY)
       .setName("Project")
       .addChildRef(2)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(2)
       .setType(Constants.ComponentType.MODULE)
       .setKey("MODULE_KEY")
       .setName("Module")
       .addChildRef(3)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(3)
       .setType(Constants.ComponentType.DIRECTORY)
       .setPath("src/main/java/dir")
       .addChildRef(4)
       .build());
-    writer.writeComponent(BatchReport.Component.newBuilder()
+    reportReader.putComponent(BatchReport.Component.newBuilder()
       .setRef(4)
       .setType(Constants.ComponentType.FILE)
       .setPath("src/main/java/dir/Foo.java")
       .build());
 
-    sut.execute(new ComputationContext(new FileBatchReportReader(new BatchReportReader(reportDir)), PROJECT_KEY, projectSettings,
+    sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings,
         dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
     assertThat(computeComponentsRefCache.getByRef(1).getKey()).isEqualTo("PROJECT_KEY:origin/master");

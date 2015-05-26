@@ -20,17 +20,17 @@
 
 package org.sonar.server.computation.step;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.List;
-
-import org.sonar.server.computation.ComputationContainer;
-
-import com.google.common.collect.Lists;
+import org.sonar.server.computation.container.CEContainer;
 
 /**
  * Ordered list of steps to be executed
  */
 public class ComputationSteps {
+
 
   /**
    * List of all {@link org.sonar.server.computation.step.ComputationStep},
@@ -72,30 +72,23 @@ public class ComputationSteps {
       SendIssueNotificationsStep.class);
   }
 
-  private final List<ComputationStep> orderedSteps;
+  private final CEContainer ceContainer;
 
-  public ComputationSteps(ComputationStep... s) {
-    this.orderedSteps = order(s);
+  public ComputationSteps(CEContainer ceContainer) {
+    this.ceContainer = ceContainer;
   }
 
-  public List<ComputationStep> orderedSteps() {
-    return orderedSteps;
-  }
-
-  private static List<ComputationStep> order(ComputationStep[] steps) {
-    List<ComputationStep> result = Lists.newArrayList();
-    for (Class<? extends ComputationStep> clazz : orderedStepClasses()) {
-      result.add(find(steps, clazz));
-    }
-    return result;
-  }
-
-  private static ComputationStep find(ComputationStep[] steps, Class<? extends ComputationStep> clazz) {
-    for (ComputationStep step : steps) {
-      if (clazz.isInstance(step)) {
-        return step;
+  public Iterable<ComputationStep> instances() {
+    return Iterables.transform(orderedStepClasses(), new Function<Class<? extends ComputationStep>, ComputationStep>() {
+      @Override
+      public ComputationStep apply(Class<? extends ComputationStep> input) {
+        ComputationStep computationStepType = ceContainer.getComponentByType(input);
+        if (computationStepType == null) {
+          throw new IllegalStateException(String.format("Component not found: %s", input));
+        }
+        return computationStepType;
       }
-    }
-    throw new IllegalStateException("Component not found: " + clazz + ". Check " + ComputationContainer.class);
+    });
   }
+
 }

@@ -109,7 +109,7 @@ public class PersistTestsStepTest extends BaseStepTest {
     when(system2.now()).thenReturn(now);
 
     dbComponentsRefCache = new DbComponentsRefCache();
-    sut = new PersistTestsStep(dbClient, system2, dbComponentsRefCache);
+    sut = new PersistTestsStep(dbClient, system2, dbComponentsRefCache, reportReader);
 
     initBasicReport();
   }
@@ -230,8 +230,8 @@ public class PersistTestsStepTest extends BaseStepTest {
     BatchReportWriter writer = new BatchReportWriter(reportDir);
     reportReader.putTests(TEST_FILE_REF_1, writer.writeTests(TEST_FILE_REF_1, Arrays.asList(newTest(1))));
     reportReader.putCoverageDetails(TEST_FILE_REF_1, Arrays.asList(
-      newCoverageDetailWithLines(1, MAIN_FILE_REF_1, 1, 3),
-      newCoverageDetailWithLines(1, MAIN_FILE_REF_1, 2, 4)));
+        newCoverageDetailWithLines(1, MAIN_FILE_REF_1, 1, 3),
+        newCoverageDetailWithLines(1, MAIN_FILE_REF_1, 2, 4)));
 
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings, dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 

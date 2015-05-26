@@ -60,11 +60,13 @@ public class PersistFileSourcesStep implements ComputationStep {
   private final DbClient dbClient;
   private final System2 system2;
   private final DbComponentsRefCache dbComponentsRefCache;
+  private final BatchReportReader reportReader;
 
-  public PersistFileSourcesStep(DbClient dbClient, System2 system2, DbComponentsRefCache dbComponentsRefCache) {
+  public PersistFileSourcesStep(DbClient dbClient, System2 system2, DbComponentsRefCache dbComponentsRefCache, BatchReportReader reportReader) {
     this.dbClient = dbClient;
     this.system2 = system2;
     this.dbComponentsRefCache = dbComponentsRefCache;
+    this.reportReader = reportReader;
   }
 
   @Override
@@ -91,7 +93,6 @@ public class PersistFileSourcesStep implements ComputationStep {
   }
 
   private void recursivelyProcessComponent(FileSourcesContext fileSourcesContext, int componentRef) {
-    BatchReportReader reportReader = fileSourcesContext.context.getReportReader();
     BatchReport.Component component = reportReader.readComponent(componentRef);
     if (component.getType().equals(Constants.ComponentType.FILE)) {
       LineIterator linesIterator = sourceLinesIterator(reportReader.readFileSource(componentRef));

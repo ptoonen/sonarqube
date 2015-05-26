@@ -45,11 +45,14 @@ public class PersistComponentsStep implements ComputationStep {
   private final DbClient dbClient;
   private final ComputeComponentsRefCache computeComponentsRefCache;
   private final DbComponentsRefCache dbComponentsRefCache;
+  private final BatchReportReader reportReader;
 
-  public PersistComponentsStep(DbClient dbClient, ComputeComponentsRefCache computeComponentsRefCache, DbComponentsRefCache dbComponentsRefCache) {
+  public PersistComponentsStep(DbClient dbClient, ComputeComponentsRefCache computeComponentsRefCache,
+    DbComponentsRefCache dbComponentsRefCache, BatchReportReader reportReader) {
     this.dbClient = dbClient;
     this.computeComponentsRefCache = computeComponentsRefCache;
     this.dbComponentsRefCache = dbComponentsRefCache;
+    this.reportReader = reportReader;
   }
 
   @Override
@@ -68,7 +71,6 @@ public class PersistComponentsStep implements ComputationStep {
   }
 
   private void recursivelyProcessComponent(ComponentContext componentContext, int componentRef, @Nullable ComponentDto parentModule, @Nullable ComponentDto project) {
-    BatchReportReader reportReader = componentContext.context.getReportReader();
     BatchReport.Component reportComponent = reportReader.readComponent(componentRef);
     ComponentDto componentDto = processComponent(componentContext, reportComponent, parentModule, project);
     dbComponentsRefCache.addComponent(componentRef, new DbComponentsRefCache.DbComponent(componentDto.getId(), componentDto.getKey(), componentDto.uuid()));

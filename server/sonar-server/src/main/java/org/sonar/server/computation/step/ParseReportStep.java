@@ -31,10 +31,12 @@ public class ParseReportStep implements ComputationStep {
 
   private final IssueComputation issueComputation;
   private final ComputeComponentsRefCache computeComponentsRefCache;
+  private final BatchReportReader reportReader;
 
-  public ParseReportStep(IssueComputation issueComputation, ComputeComponentsRefCache computeComponentsRefCache) {
+  public ParseReportStep(IssueComputation issueComputation, ComputeComponentsRefCache computeComponentsRefCache, BatchReportReader reportReader) {
     this.issueComputation = issueComputation;
     this.computeComponentsRefCache = computeComponentsRefCache;
+    this.reportReader = reportReader;
   }
 
   @Override
@@ -46,7 +48,6 @@ public class ParseReportStep implements ComputationStep {
   }
 
   private void recursivelyProcessComponent(ComputationContext context, int componentRef) {
-    BatchReportReader reportReader = context.getReportReader();
     BatchReport.Component component = reportReader.readComponent(componentRef);
     List<BatchReport.Issue> issues = reportReader.readComponentIssues(componentRef);
     ComputeComponentsRefCache.ComputeComponent computeProject = computeComponentsRefCache.getByRef(context.getReportMetadata().getRootComponentRef());
@@ -61,7 +62,7 @@ public class ParseReportStep implements ComputationStep {
     int deletedComponentsCount = context.getReportMetadata().getDeletedComponentsCount();
     ComputeComponentsRefCache.ComputeComponent computeProject = computeComponentsRefCache.getByRef(context.getReportMetadata().getRootComponentRef());
     for (int componentRef = 1; componentRef <= deletedComponentsCount; componentRef++) {
-      BatchReport.Issues issues = context.getReportReader().readDeletedComponentIssues(componentRef);
+      BatchReport.Issues issues = reportReader.readDeletedComponentIssues(componentRef);
       issueComputation.processComponentIssues(context, issues.getIssueList(), issues.getComponentUuid(), null, computeProject.getKey(), computeProject.getUuid());
     }
   }

@@ -42,10 +42,12 @@ public class FeedComponentsCacheStep implements ComputationStep {
 
   private final DbClient dbClient;
   private final ComputeComponentsRefCache computeComponentsRefCache;
+  private final BatchReportReader reportReader;
 
-  public FeedComponentsCacheStep(DbClient dbClient, ComputeComponentsRefCache computeComponentsRefCache) {
+  public FeedComponentsCacheStep(DbClient dbClient, ComputeComponentsRefCache computeComponentsRefCache, BatchReportReader reportReader) {
     this.dbClient = dbClient;
     this.computeComponentsRefCache = computeComponentsRefCache;
+    this.reportReader = reportReader;
   }
 
   @Override
@@ -55,14 +57,13 @@ public class FeedComponentsCacheStep implements ComputationStep {
       List<ComponentDto> components = dbClient.componentDao().selectComponentsFromProjectKey(session, context.getProjectKey());
       Map<String, ComponentDto> componentDtosByKey = componentDtosByKey(components);
       int rootComponentRef = context.getReportMetadata().getRootComponentRef();
-      recursivelyProcessComponent(context, rootComponentRef, context.getReportReader().readComponent(rootComponentRef), componentDtosByKey);
+      recursivelyProcessComponent(context, rootComponentRef, reportReader.readComponent(rootComponentRef), componentDtosByKey);
     } finally {
       session.close();
     }
   }
 
   private void recursivelyProcessComponent(ComputationContext context, int componentRef, BatchReport.Component nearestModule, Map<String, ComponentDto> componentDtosByKey) {
-    BatchReportReader reportReader = context.getReportReader();
     BatchReport.Component reportComponent = reportReader.readComponent(componentRef);
 
     String path = reportComponent.hasPath() ? reportComponent.getPath() : null;

@@ -63,7 +63,7 @@ public class ParseReportStepTest extends BaseStepTest {
   IssueComputation issueComputation = mock(IssueComputation.class);
   ComputeComponentsRefCache computeComponentsRefCache = new ComputeComponentsRefCache();
 
-  ParseReportStep sut = new ParseReportStep(issueComputation, computeComponentsRefCache);
+  ParseReportStep sut = new ParseReportStep(issueComputation, computeComponentsRefCache, reportReader);
 
   @Test
   public void extract_report_from_db_and_browse_components() throws Exception {

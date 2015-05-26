@@ -21,6 +21,8 @@ package org.sonar.server.computation.issue;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import java.io.IOException;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,11 +38,9 @@ import org.sonar.api.utils.log.LogTester;
 import org.sonar.batch.protocol.output.BatchReport;
 import org.sonar.core.rule.RuleDto;
 import org.sonar.server.computation.ComputationContext;
+import org.sonar.server.computation.batch.BatchReportReader;
 import org.sonar.server.user.index.UserDoc;
 import org.sonar.server.user.index.UserIndex;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -79,7 +79,7 @@ public class IssueComputationTest {
   public void setUp() throws IOException {
     when(ruleCache.get(RULE_KEY)).thenReturn(rule);
     outputIssues = new IssueCache(temp.newFile(), System2.INSTANCE);
-    sut = new IssueComputation(ruleCache, lineCache, scmAccountCache, outputIssues, userIndex);
+    sut = new IssueComputation(ruleCache, lineCache, scmAccountCache, outputIssues, userIndex, mock(BatchReportReader.class));
   }
 
   @After
