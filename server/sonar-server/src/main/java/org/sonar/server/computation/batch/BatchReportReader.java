@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import org.sonar.batch.protocol.output.BatchReport;
+import org.sonar.server.util.CloseableIterator;
 
 public interface BatchReportReader {
   BatchReport.Metadata readMetadata();
@@ -42,19 +43,14 @@ public interface BatchReportReader {
 
   List<BatchReport.Symbols.Symbol> readComponentSymbols(int componentRef);
 
-  boolean hasSyntaxHighlighting(int componentRef);
+  CloseableIterator<BatchReport.SyntaxHighlighting> readComponentSyntaxHighlighting(int fileRef);
 
-  @CheckForNull
-  File readComponentSyntaxHighlighting(int fileRef);
-
-  @CheckForNull
-  File readComponentCoverage(int fileRef);
+  CloseableIterator<BatchReport.Coverage> readComponentCoverage(int fileRef);
 
   File readFileSource(int fileRef);
 
   @CheckForNull
   File readTests(int testFileRef);
 
-  @CheckForNull
-  File readCoverageDetails(int testFileRef);
+  CloseableIterator<BatchReport.CoverageDetail> readCoverageDetails(int testFileRef);
 }

@@ -52,6 +52,7 @@ import org.sonar.server.computation.source.ReportIterator;
 import org.sonar.server.db.DbClient;
 import org.sonar.server.source.db.FileSourceDb;
 import org.sonar.server.source.db.FileSourceDb.Test.TestStatus;
+import org.sonar.server.util.CloseableIterator;
 
 public class PersistTestsStep implements ComputationStep {
 
@@ -198,13 +199,8 @@ public class PersistTestsStep implements ComputationStep {
    */
   private Table<String, String, FileSourceDb.Test.CoveredFile.Builder> loadCoverageDetails(int testFileRef, TestContext context) {
     Table<String, String, FileSourceDb.Test.CoveredFile.Builder> nameToCoveredFiles = HashBasedTable.create();
-    File coverageDetailsFile = context.reader.readCoverageDetails(testFileRef);
-    if (coverageDetailsFile == null) {
-      return nameToCoveredFiles;
-    }
 
-    ReportIterator<BatchReport.CoverageDetail> coverageIterator = new ReportIterator<>(coverageDetailsFile, BatchReport.CoverageDetail.PARSER);
-    try {
+    try(CloseableIterator<BatchReport.CoverageDetail> coverageIterator = context.reader.readCoverageDetails(testFileRef)) {
       while (coverageIterator.hasNext()) {
         BatchReport.CoverageDetail batchCoverageDetail = coverageIterator.next();
         for (BatchReport.CoverageDetail.CoveredFile batchCoveredFile : batchCoverageDetail.getCoveredFileList()) {
@@ -224,8 +220,6 @@ public class PersistTestsStep implements ComputationStep {
           }
         }
       }
-    } finally {
-      coverageIterator.close();
     }
     return nameToCoveredFiles;
   }

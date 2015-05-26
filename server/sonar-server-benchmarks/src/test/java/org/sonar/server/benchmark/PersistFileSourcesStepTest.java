@@ -132,9 +132,9 @@ public class PersistFileSourcesStepTest {
     dbComponentsRefCache.addComponent(fileRef, new DbComponent((long) fileRef, "PROJECT:" + fileRef, Uuids.create()));
 
     FileUtils.writeLines(writer.getSourceFile(fileRef), lineData.lines);
-    reportReader.putCoverage(fileRef, writer.writeComponentCoverage(fileRef, lineData.coverages));
+    reportReader.putCoverage(fileRef, lineData.coverages);
     reportReader.putChangesets(lineData.changesetsBuilder.setComponentRef(fileRef).build());
-    reportReader.putSyntaxHighlighting(fileRef, writer.writeComponentSyntaxHighlighting(fileRef, lineData.highlightings));
+    reportReader.putSyntaxHighlighting(fileRef, lineData.highlightings);
     reportReader.putSymbols(fileRef, lineData.symbols);
     reportReader.putDuplications(fileRef, lineData.duplications);
   }

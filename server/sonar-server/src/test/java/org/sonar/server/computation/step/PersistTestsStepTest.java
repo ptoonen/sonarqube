@@ -143,7 +143,7 @@ public class PersistTestsStepTest extends BaseStepTest {
     List<CoverageDetail> coverageDetails = Arrays.asList(
       newCoverageDetail(1, MAIN_FILE_REF_1)
       );
-    reportReader.putCoverageDetails(TEST_FILE_REF_1, writer.writeCoverageDetails(TEST_FILE_REF_1, coverageDetails));
+    reportReader.putCoverageDetails(TEST_FILE_REF_1, coverageDetails);
 
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings, dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
@@ -167,7 +167,7 @@ public class PersistTestsStepTest extends BaseStepTest {
   public void insert_all_data_of_a_test() {
     BatchReportWriter writer = new BatchReportWriter(reportDir);
     reportReader.putTests(TEST_FILE_REF_1, writer.writeTests(TEST_FILE_REF_1, Arrays.asList(newTest(1))));
-    reportReader.putCoverageDetails(TEST_FILE_REF_1, writer.writeCoverageDetails(TEST_FILE_REF_1, Arrays.asList(newCoverageDetail(1, MAIN_FILE_REF_1))));
+    reportReader.putCoverageDetails(TEST_FILE_REF_1, Arrays.asList(newCoverageDetail(1, MAIN_FILE_REF_1)));
 
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings, dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
@@ -212,8 +212,8 @@ public class PersistTestsStepTest extends BaseStepTest {
     List<BatchReport.Test> batchTests = Arrays.asList(newTest(1));
     reportReader.putTests(TEST_FILE_REF_1, writer.writeTests(TEST_FILE_REF_1, batchTests));
     List<CoverageDetail> coverageDetails = Arrays.asList(newCoverageDetail(1, MAIN_FILE_REF_1), newCoverageDetail(2, MAIN_FILE_REF_2));
-    reportReader.putCoverageDetails(TEST_FILE_REF_1, writer.writeCoverageDetails(TEST_FILE_REF_1, coverageDetails));
-    reportReader.putCoverageDetails(TEST_FILE_REF_2, writer.writeCoverageDetails(TEST_FILE_REF_2, coverageDetails));
+    reportReader.putCoverageDetails(TEST_FILE_REF_1, coverageDetails);
+    reportReader.putCoverageDetails(TEST_FILE_REF_2, coverageDetails);
 
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings, dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
@@ -229,9 +229,9 @@ public class PersistTestsStepTest extends BaseStepTest {
   public void aggregate_coverage_details() {
     BatchReportWriter writer = new BatchReportWriter(reportDir);
     reportReader.putTests(TEST_FILE_REF_1, writer.writeTests(TEST_FILE_REF_1, Arrays.asList(newTest(1))));
-    reportReader.putCoverageDetails(TEST_FILE_REF_1, writer.writeCoverageDetails(TEST_FILE_REF_1, Arrays.asList(
+    reportReader.putCoverageDetails(TEST_FILE_REF_1, Arrays.asList(
       newCoverageDetailWithLines(1, MAIN_FILE_REF_1, 1, 3),
-      newCoverageDetailWithLines(1, MAIN_FILE_REF_1, 2, 4))));
+      newCoverageDetailWithLines(1, MAIN_FILE_REF_1, 2, 4)));
 
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings, dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
 
@@ -264,7 +264,7 @@ public class PersistTestsStepTest extends BaseStepTest {
     reportReader.putTests(TEST_FILE_REF_1, writer.writeTests(TEST_FILE_REF_1, Arrays.asList(newBatchTest)));
 
     CoverageDetail newCoverageDetail = newCoverageDetail(1, MAIN_FILE_REF_1);
-    reportReader.putCoverageDetails(TEST_FILE_REF_1, writer.writeCoverageDetails(TEST_FILE_REF_1, Arrays.asList(newCoverageDetail)));
+    reportReader.putCoverageDetails(TEST_FILE_REF_1, Arrays.asList(newCoverageDetail));
 
     // ACT
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings, dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));

@@ -197,18 +197,17 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
 
   @Test
   public void persist_coverage() throws Exception {
-    BatchReportWriter writer = initBasicReport(1);
+    initBasicReport(1);
 
-    File file = writer.writeComponentCoverage(FILE_REF, newArrayList(BatchReport.Coverage.newBuilder()
-      .setLine(1)
-      .setConditions(10)
-      .setUtHits(true)
-      .setUtCoveredConditions(2)
-      .setItHits(true)
-      .setItCoveredConditions(3)
-      .setOverallCoveredConditions(4)
-      .build()));
-    reportReader.putCoverage(FILE_REF, file);
+    reportReader.putCoverage(FILE_REF, newArrayList(BatchReport.Coverage.newBuilder()
+        .setLine(1)
+        .setConditions(10)
+        .setUtHits(true)
+        .setUtCoveredConditions(2)
+        .setItHits(true)
+        .setItCoveredConditions(3)
+        .setOverallCoveredConditions(4)
+        .build()));
 
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings,
       dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
@@ -237,8 +236,8 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
     reportReader.putChangesets(BatchReport.Changesets.newBuilder()
       .setComponentRef(FILE_REF)
       .addChangeset(BatchReport.Changesets.Changeset.newBuilder()
-          .setAuthor("john")
-          .setDate(123456789L)
+        .setAuthor("john")
+        .setDate(123456789L)
         .setRevision("rev-1")
         .build())
       .addChangesetIndexByLine(0)
@@ -260,17 +259,16 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
 
   @Test
   public void persist_highlighting() throws Exception {
-    BatchReportWriter writer = initBasicReport(1);
+    initBasicReport(1);
 
-    File file = writer.writeComponentSyntaxHighlighting(FILE_REF, newArrayList(BatchReport.SyntaxHighlighting.newBuilder()
+    reportReader.putSyntaxHighlighting(FILE_REF, newArrayList(BatchReport.SyntaxHighlighting.newBuilder()
       .setRange(BatchReport.Range.newBuilder()
         .setStartLine(1).setEndLine(1)
-          .setStartOffset(2).setEndOffset(4)
+        .setStartOffset(2).setEndOffset(4)
         .build())
       .setType(Constants.HighlightingType.ANNOTATION)
       .build()
       ));
-    reportReader.putSyntaxHighlighting(FILE_REF, file);
 
     sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings,
       dbClient, ComponentTreeBuilders.from(DumbComponent.DUMB_PROJECT), languageRepository));
@@ -290,12 +288,12 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
 
     reportReader.putSymbols(FILE_REF, newArrayList(
       BatchReport.Symbols.Symbol.newBuilder()
-          .setDeclaration(BatchReport.Range.newBuilder()
-              .setStartLine(1).setEndLine(1).setStartOffset(2).setEndOffset(4)
-              .build())
-          .addReference(BatchReport.Range.newBuilder()
-                  .setStartLine(3).setEndLine(3).setStartOffset(1).setEndOffset(3)
-          .build()
+        .setDeclaration(BatchReport.Range.newBuilder()
+            .setStartLine(1).setEndLine(1).setStartOffset(2).setEndOffset(4)
+            .build())
+        .addReference(BatchReport.Range.newBuilder()
+                .setStartLine(3).setEndLine(3).setStartOffset(1).setEndOffset(3)
+                .build()
         ).build()
       ));
 
@@ -319,16 +317,16 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
 
     reportReader.putDuplications(FILE_REF, newArrayList(
       BatchReport.Duplication.newBuilder()
-          .setOriginPosition(BatchReport.Range.newBuilder()
-              .setStartLine(1)
-          .setEndLine(2)
-              .build())
-          .addDuplicate(BatchReport.Duplicate.newBuilder()
-              .setRange(BatchReport.Range.newBuilder()
-                  .setStartLine(3)
-                  .setEndLine(4)
-                  .build())
-          .build())
+        .setOriginPosition(BatchReport.Range.newBuilder()
+            .setStartLine(1)
+            .setEndLine(2)
+            .build())
+        .addDuplicate(BatchReport.Duplicate.newBuilder()
+            .setRange(BatchReport.Range.newBuilder()
+                .setStartLine(3)
+                .setEndLine(4)
+                .build())
+            .build())
         .build()
       ));
 
@@ -451,18 +449,17 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
 
   @Test
   public void display_file_path_when_exception_is_generated() throws Exception {
-    BatchReportWriter writer = initBasicReport(1);
+    initBasicReport(1);
 
-    File file = writer.writeComponentSyntaxHighlighting(FILE_REF, newArrayList(BatchReport.SyntaxHighlighting.newBuilder()
+    reportReader.putSyntaxHighlighting(FILE_REF, newArrayList(BatchReport.SyntaxHighlighting.newBuilder()
       .setRange(BatchReport.Range.newBuilder()
         .setStartLine(1).setEndLine(1)
-              // Wrong offset -> fail
-          .setStartOffset(4).setEndOffset(2)
+        // Wrong offset -> fail
+        .setStartOffset(4).setEndOffset(2)
         .build())
       .setType(Constants.HighlightingType.ANNOTATION)
       .build()
       ));
-    reportReader.putSyntaxHighlighting(FILE_REF, file);
 
     try {
       sut.execute(new ComputationContext(reportReader, PROJECT_KEY, projectSettings,
@@ -473,7 +470,7 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
     }
   }
 
-  private BatchReportWriter initBasicReport(int numberOfLines) throws IOException {
+  private void initBasicReport(int numberOfLines) throws IOException {
     dbComponentsRefCache.addComponent(1, new DbComponentsRefCache.DbComponent(1L, PROJECT_KEY, PROJECT_UUID));
     dbComponentsRefCache.addComponent(2, new DbComponentsRefCache.DbComponent(2L, "MODULE_KEY", "MODULE"));
     dbComponentsRefCache.addComponent(FILE_REF, new DbComponentsRefCache.DbComponent(3L, "MODULE_KEY:src/Foo.java", FILE_UUID));
@@ -508,8 +505,6 @@ public class PersistFileSourcesStepTest extends BaseStepTest {
     File file = writer.getSourceFile(FILE_REF);
     FileUtils.writeLines(file, lines);
     reportReader.putFileSoure(FILE_REF, file);
-
-    return writer;
   }
 
   private static class EmptyLanguageRepository implements LanguageRepository {

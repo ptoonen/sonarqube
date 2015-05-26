@@ -49,11 +49,11 @@ import org.sonar.server.computation.source.CoverageLineReader;
 import org.sonar.server.computation.source.DuplicationLineReader;
 import org.sonar.server.computation.source.HighlightingLineReader;
 import org.sonar.server.computation.source.LineReader;
-import org.sonar.server.computation.source.ReportIterator;
 import org.sonar.server.computation.source.ScmLineReader;
 import org.sonar.server.computation.source.SymbolsLineReader;
 import org.sonar.server.db.DbClient;
 import org.sonar.server.source.db.FileSourceDb;
+import org.sonar.server.util.CloseableIterator;
 
 public class PersistFileSourcesStep implements ComputationStep {
 
@@ -180,27 +180,25 @@ public class PersistFileSourcesStep implements ComputationStep {
 
   private static class LineReaders {
     private final List<LineReader> readers = new ArrayList<>();
-    private final List<ReportIterator> iterators = new ArrayList<>();
+    private final List<CloseableIterator<?>> iterators = new ArrayList<>();
 
     LineReaders(BatchReportReader reportReader, int componentRef) {
-      File coverageFile = reportReader.readComponentCoverage(componentRef);
+      CloseableIterator<BatchReport.Coverage> coverageReportIterator = reportReader.readComponentCoverage(componentRef);
       BatchReport.Changesets scmReport = reportReader.readChangesets(componentRef);
-      File highlightingFile = reportReader.readComponentSyntaxHighlighting(componentRef);
+      CloseableIterator<BatchReport.SyntaxHighlighting> highlightingIterator = reportReader.readComponentSyntaxHighlighting(componentRef);
       List<BatchReport.Symbols.Symbol> symbols = reportReader.readComponentSymbols(componentRef);
       List<BatchReport.Duplication> duplications = reportReader.readComponentDuplications(componentRef);
 
-      if (coverageFile != null) {
-        ReportIterator<BatchReport.Coverage> coverageReportIterator = new ReportIterator<>(coverageFile, BatchReport.Coverage.PARSER);
+      if (coverageReportIterator != null) {
         iterators.add(coverageReportIterator);
         readers.add(new CoverageLineReader(coverageReportIterator));
       }
       if (scmReport != null) {
         readers.add(new ScmLineReader(scmReport));
       }
-      if (highlightingFile != null) {
-        ReportIterator<BatchReport.SyntaxHighlighting> syntaxHighlightingReportIterator = new ReportIterator<>(highlightingFile, BatchReport.SyntaxHighlighting.PARSER);
-        iterators.add(syntaxHighlightingReportIterator);
-        readers.add(new HighlightingLineReader(syntaxHighlightingReportIterator));
+      if (highlightingIterator != null) {
+        iterators.add(highlightingIterator);
+        readers.add(new HighlightingLineReader(highlightingIterator));
       }
       if (!duplications.isEmpty()) {
         readers.add(new DuplicationLineReader(duplications));
@@ -215,7 +213,7 @@ public class PersistFileSourcesStep implements ComputationStep {
     }
 
     void close() {
-      for (ReportIterator reportIterator : iterators) {
+      for (CloseableIterator<?> reportIterator : iterators) {
         reportIterator.close();
       }
     }
