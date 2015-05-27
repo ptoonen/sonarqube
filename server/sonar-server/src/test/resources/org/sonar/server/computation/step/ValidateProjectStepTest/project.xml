@@ -1,0 +1,8 @@
+<dataset>
+
+  <projects id="1" root_id="[null]" scope="PRJ" qualifier="TRK" kee="PROJECT_KEY" deprecated_kee="PROJECT_KEY" name="Project name"
+            uuid="ABCD" project_uuid="ABCD" module_uuid="[null]" module_uuid_path=".ABCD."
+            description="the description" long_name="Project name"
+            enabled="[true]" language="[null]" copy_resource_id="[null]" person_id="[null]" path="[null]" authorization_updated_at="123456789" />
+
+</dataset>
